@@ -8,8 +8,9 @@ import json
 
 def user_service_thread(sock_conn, client_addr):
     '''
-    函数功能:用来处理各个用户的登录注册请求
+        用来处理各个用户的登录注册请求
     '''
+    lock.acquire()
     try:
         while True:
             data_len = sock_conn.recv(15).decode().rstrip()
@@ -32,7 +33,7 @@ def user_service_thread(sock_conn, client_addr):
                     # 登录校验
                     rsp = {"op": 1, "error_code": 0}
 
-                    if not user_reg_login.check_user_name(req["args"]["uname"]):
+                    if not (user_reg_login.check_user_name(req["args"]["uname"]) and user_reg_login.check_password(req["args"]["password"])):
                         rsp["error_code"] = 1
                     
                     rsp = json.dumps(rsp).encode()
@@ -67,6 +68,7 @@ def user_service_thread(sock_conn, client_addr):
             else:
                 break
     finally:
+        lock.release()
         sock_conn.close()
 
            
@@ -74,6 +76,7 @@ def client_chat(sock_conn, client_addr):
     '''
         用来接收来自各个客户端的消息,并将其转发到其他客户端
     '''
+    lock.acquire()
     try:
         while True:
             msg_len_data = sock_conn.recv(15)  # 接收定长包头
@@ -102,6 +105,7 @@ def client_chat(sock_conn, client_addr):
                 continue
             break
     finally:
+        lock.release()
         client_socks.remove((sock_conn, client_addr))
         sock_conn.close()
 
@@ -116,11 +120,13 @@ client_socks = []
 while True:
     sock_conn, client_addr = sock_listen1.accept()
     client_socks.append((sock_conn, client_addr))
-    threading.Thread(target=user_service_thread, args=(sock_conn,client_addr)).start()
-    threading.Thread(target=client_chat, args=(sock_conn, client_addr)).start()
-
-
-
+    thread1 = threading.Thread(target=user_service_thread, args=(sock_conn,client_addr))
+    thread2 = threading.Thread(target=client_chat, args=(sock_conn, client_addr))
+    lock = threading.Lock()
+    thread1.start()
+    thread2.start()
+    thread1.join()
+    thread2.join()
 
 
 

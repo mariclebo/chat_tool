@@ -18,14 +18,20 @@ def main():
 
         mainWnd.title("奇迹用户登录")
 
-        mainWnd.geometry("400x300")   # 定义窗口大小
-
+        mainWnd.geometry("400x300+600+300")   # 定义窗口大小和位置
+        # 禁止改变窗口大小
+        mainWnd.resizable(width=False, height=False)
+        # mainWnd.maxsize(400, 300)
+        # mainWnd.minsize(400, 300)
+    
+        #窗口背景
         canvas = Tk.Canvas(mainWnd, height=400, width=400)
-        image_file = Tk.PhotoImage(file=r"C:\\Users\Administrator\Desktop\\Python实用工具\\chat_tool\\login_background.gif")
+        image_file = Tk.PhotoImage(file=r"C:\\Users\\Administrator\\Desktop\\Python实用工具\\chat_tool\\images\\login_background.gif")
         image = canvas.create_image(0, 0, anchor='nw', image=image_file)
         canvas.pack(side='top')
 
         # 使用Label方法生成标签
+        Tk.Label(mainWnd, text="奇迹之家", bg="pink", fg="green", font=("草书", 18)).place(x=150, y=40)
         Tk.Label(mainWnd, text="用户名:", bg="pink", fg="red", font=("宋体", 15)).place(x=30 , y=100)
         Tk.Label(mainWnd, text="密码:", bg="pink", fg="red", font=("宋体", 15)).place(x=30, y=170)
 
@@ -36,9 +42,9 @@ def main():
         password_box = Tk.Entry(mainWnd)
         password_box.place(x=120, y=170, width=230, height=30)
 
-        global clientUname, clientpassword
-        clientUname = userName_box.get()
-        clientpassword = password_box.get()
+        global loginUname, loginpassword
+        loginUname = userName_box.get()
+        loginpassword = password_box.get()
 
 
         # 使用Buttun方法生成按钮
@@ -50,7 +56,7 @@ def main():
 
         mainWnd.mainloop()
     finally:
-        mainWnd.close()
+        mainWnd.destroy()
 
 
 def chat_sign_up():
@@ -59,7 +65,8 @@ def chat_sign_up():
 
         wind.title("奇迹用户注册")
 
-        wind.geometry("500x500")
+        wind.geometry("500x500+550+200")
+        wind.resizable(width=False, height=False)
 
         # canvas = Tk.Canvas(wind, height=2500, width=2500)
         # image_file = Tk.PhotoImage(file="D:\python学习笔记\Python高级\day41\chat_tool\img2.gif")
@@ -83,7 +90,9 @@ def chat_sign_up():
         email_box = Tk.Entry(wind)
         email_box.place(x=160, y=310, width=230, height=30) 
 
-        global clientPhone, clientEmail
+        global clientUname, clientpassword, clientPhone, clientEmail
+        clientUname = userName_box.get()
+        clientpassword = password_box.get()
         clientPhone = phone_box.get()
         clientEmail = email_box.get()
 
@@ -91,13 +100,14 @@ def chat_sign_up():
         btncommit.place(x=240, y=380, width=50)
         wind.mainloop()
     finally:
-        wind.close()
+        wind.destroy()
 
 
 def chat_frame():
     mainWnd = Tk.Tk()
     mainWnd.title("奇迹之家聊天室")
 
+    global chat_record_box
     chat_record_box = Tk.Text(mainWnd)
     chat_record_box.configure(state=Tk.DISABLED)
     chat_record_box.pack(padx=10, pady=10)
@@ -114,7 +124,7 @@ def chat_frame():
 
 
 def chat_sign_in_send():
-    req= {"op":1,"args":{"uname":clientUname,"password":clientpassword}}
+    req= {"op":1,"args":{"uname":loginUname,"password":loginpassword}}
     req= json.dumps(req)
     data_top="{:<15}".format(len(req)).encode()
     sock.send(data_top)

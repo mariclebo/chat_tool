@@ -8,7 +8,6 @@ import urllib.request
 import random, json
 import sys
 
-
 def check_user_name(user_name):
     '''
     函数功能：校验用户名是否合法
@@ -16,17 +15,15 @@ def check_user_name(user_name):
     user_name 待校验的用户名
     返回值：校验通过返回0，校验失败返回非零（格式错误返回1，用户名已存在返回2）
     '''
+    # 连接数据库，conn为Connection对象
+    conn = pymysql.connect("127.0.0.1", "qb", "qjbhave$", "test")
     # [a-zA-Z0-9_]{6, 15}
     if not re.match("^[a-zA-Z0-9_]{6,15}$", user_name):
         return 1
-
-    # 连接数据库，conn为Connection对象
-    conn = pymysql.connect("127.0.0.1", "qb", "qjbhave$", "test")
-
     try:
         with conn.cursor() as cur:  # 获取一个游标对象(Cursor类)，用于执行SQL语句
             # 执行任意支持的SQL语句
-            cur.execute("select uname from user where uname=%s", (user_name, ))
+            cur.execute("select uname from user where uname=%s" , (user_name, ))
             # 通过游标获取执行结果
             rows = cur.fetchone()
     finally:
@@ -43,29 +40,25 @@ def check_password(password):
     '''
     函数功能：校验用户密码是否合法
     函数参数：
-    password 待校验的密码
+    password 待校验的密码 弱密码:全是数字，符号，字母; 中等密码：数字加上符号，数字加上字母，字母加上符号; 强密码：三个混合．
     返回值：校验通过返回0，校验错误返回非零（密码太长或太短返回1，密码安全强度太低返回2）
     '''
-    # [a-zA-Z0-9_]{6, 15}
-    if not re.match("^[a-zA-Z0-9_]{6,15}$", password):
-        return 1
-
-    # 连接数据库，conn为Connection对象
-    conn = pymysql.connect("127.0.0.1", "qb", "", "test")
-
+    conn = pymysql.connect("127.0.0.1", "qb", "qjbhave$", "test")
+    if len(password) < 6 and len(password) > 18:
+        return 1 
     try:
         with conn.cursor() as cur:  # 获取一个游标对象(Cursor类)，用于执行SQL语句
             # 执行任意支持的SQL语句
-            cur.execute("select passwd from user where passwd=%s", (password, ))
+            cur.execute("select passwd from user where passwd=%s" , (password, ))
             # 通过游标获取执行结果
             rows = cur.fetchone()
     finally:
         # 关闭数据库连接
-        conn.close()  
+        conn.close()
 
-    if rows:
+    if rows: 
         return 2
-
+    
     return 0
 
 
@@ -83,35 +76,35 @@ def check_phone(phone):
     return 1
 
 
-def send_sms_code(phone):
-    '''
-    函数功能：发送短信验证码（6位随机数字）
-    函数参数：
-    phone 接收短信验证码的手机号
-    返回值：发送成功返回验证码，失败返回False
-    '''
-    verify_code = str(random.randint(100000, 999999))
+# def send_sms_code(phone):
+#     '''
+#     函数功能：发送短信验证码（6位随机数字）
+#     函数参数：
+#     phone 接收短信验证码的手机号
+#     返回值：发送成功返回验证码，失败返回False
+#     '''
+#     verify_code = str(random.randint(100000, 999999))
 
-    try:
-        url = "http://v.juhe.cn/sms/send"
-        params = {
-            "mobile": phone,  # 接受短信的用户手机号码
-            "tpl_id": "162901",  # 您申请的短信模板ID，根据实际情况修改
-            "tpl_value": "#code#=%s" % verify_code,  # 您设置的模板变量，根据实际情况修改
-            "key": "ab75e2e54bf3044898459cb209b195e4",  # 应用APPKEY(应用详细页查询)
-        }
-        params = urllib.parse.urlencode(params).encode()
+#     try:
+#         url = "http://v.juhe.cn/sms/send"
+#         params = {
+#             "mobile": phone,  # 接受短信的用户手机号码
+#             "tpl_id": "162901",  # 您申请的短信模板ID，根据实际情况修改
+#             "tpl_value": "#code#=%s" % verify_code,  # 您设置的模板变量，根据实际情况修改
+#             "key": "ab75e2e54bf3044898459cb209b195e4",  # 应用APPKEY(应用详细页查询)
+#         }
+#         params = urllib.parse.urlencode(params).encode()
 
-        f = urllib.request.urlopen(url, params)
-        content = f.read()
-        res = json.loads(content)
+#         f = urllib.request.urlopen(url, params)
+#         content = f.read()
+#         res = json.loads(content)
 
-        if res and res['error_code'] == 0:
-            return verify_code
-        else:
-            return False
-    except:
-        return False
+#         if res and res['error_code'] == 0:
+#             return verify_code
+#         else:
+#             return False
+#     except:
+#         return False
 
 
 def send_email_code(email):
@@ -132,19 +125,17 @@ def user_reg(uname, password, phone, email):
     '''
     函数功能：将用户注册信息写入数据库
     函数描述：
-    uname 用户名
-    password 密码
+    uname 用户名 （只能包含英文字母、数字或下划线，最短6位，最长15位）
+    password 密码 ()
     phone 手机号
     email 邮箱
     返回值：成功返回True，失败返回False
     '''
-    # 连接数据库，conn为Connection对象
     conn = pymysql.connect("127.0.0.1", "qb", "qjbhave$", "test")
-
     try:
         with conn.cursor() as cur:  # 获取一个游标对象(Cursor类)，用于执行SQL语句
             # 执行任意支持的SQL语句
-            cur.execute("insert into user (uname, passwd, phone, email) values (%s, %s, %s, %s)", (uname, password, phone, email))
+            cur.execute("insert into user (uname, passwd, phone, email) values (%s, %s, %s, %s)" , (uname, password, phone, email))
             r = cur.rowcount
             conn.commit()
     finally:
@@ -195,21 +186,21 @@ def main():
         else:
             break
 
-    verify_code = send_sms_code(phone)
+    # verify_code = send_sms_code(phone)
 
-    if verify_code:
-        print("短信验证码已发送！")
-    else:
-        print("短信验证码发送失败，请检查网络连接或联系软件开发商！")
-        sys.exit(1)
+    # if verify_code:
+    #     print("短信验证码已发送！")
+    # else:
+    #     print("短信验证码发送失败，请检查网络连接或联系软件开发商！")
+    #     sys.exit(1)
 
-    while True:
-        verify_code2 = input("请输入短信验证码：")
+    # while True:
+    #     verify_code2 = input("请输入短信验证码：")
 
-        if verify_code2 != verify_code:
-            print("短信验证码输入错误，请重新输入！")
-        else:
-            break
+    #     if verify_code2 != verify_code:
+    #         print("短信验证码输入错误，请重新输入！")
+    #     else:
+    #         break
 
     email = input("请输入邮箱：")
 
